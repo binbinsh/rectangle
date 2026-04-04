@@ -22,6 +22,8 @@ class SettingsViewController: NSViewController {
     @IBOutlet weak var checkForUpdatesButton: NSButton!
     @IBOutlet weak var gapSlider: NSSlider!
     @IBOutlet weak var gapLabel: NSTextField!
+    @IBOutlet weak var screenEdgeGapTopField: AutoSaveFloatField!
+    @IBOutlet weak var screenEdgeGapTopUsesFullFrameCheckbox: NSButton!
     @IBOutlet weak var cursorAcrossCheckbox: NSButton!
     @IBOutlet weak var useCursorScreenDetectionCheckbox: NSButton!
     @IBOutlet weak var doubleClickTitleBarCheckbox: NSButton!
@@ -89,6 +91,10 @@ class SettingsViewController: NSViewController {
                 }
             }
         }
+    }
+
+    @IBAction func toggleScreenEdgeGapTopUsesFullFrame(_ sender: NSButton) {
+        Defaults.screenEdgeGapTopUsesFullFrame.enabled = sender.state == .on
     }
     
     @IBAction func toggleCursorMove(_ sender: NSButton) {
@@ -1003,6 +1009,11 @@ class SettingsViewController: NSViewController {
         gapSlider.intValue = Int32(Defaults.gapSize.value)
         gapLabel.stringValue = "\(gapSlider.intValue) px"
         gapSlider.isContinuous = true
+        screenEdgeGapTopField.stringValue = "\(Int(Defaults.screenEdgeGapTop.value))"
+        screenEdgeGapTopField.delegate = self
+        screenEdgeGapTopField.defaults = Defaults.screenEdgeGapTop
+        screenEdgeGapTopField.fallbackValue = 0
+        screenEdgeGapTopUsesFullFrameCheckbox.state = Defaults.screenEdgeGapTopUsesFullFrame.enabled ? .on : .off
         
         cursorAcrossCheckbox.state = Defaults.moveCursorAcrossDisplays.userEnabled ? .on : .off
 

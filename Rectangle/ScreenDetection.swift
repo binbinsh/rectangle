@@ -187,11 +187,19 @@ extension NSScreen {
         newFrame.origin.x += Defaults.screenEdgeGapLeft.cgFloat
         newFrame.origin.y += Defaults.screenEdgeGapBottom.cgFloat
         newFrame.size.width -= (Defaults.screenEdgeGapLeft.cgFloat + Defaults.screenEdgeGapRight.cgFloat)
-        
+
+        let topGap: CGFloat
         if #available(macOS 12.0, *), self.safeAreaInsets.top != 0, Defaults.screenEdgeGapTopNotch.value != 0 {
-            newFrame.size.height -= (Defaults.screenEdgeGapTopNotch.cgFloat + Defaults.screenEdgeGapBottom.cgFloat)
+            topGap = Defaults.screenEdgeGapTopNotch.cgFloat
         } else {
-            newFrame.size.height -= (Defaults.screenEdgeGapTop.cgFloat + Defaults.screenEdgeGapBottom.cgFloat)
+            topGap = Defaults.screenEdgeGapTop.cgFloat
+        }
+
+        if Defaults.screenEdgeGapTopUsesFullFrame.enabled {
+            // Treat the configured top gap as an absolute margin from the display edge.
+            newFrame.size.height = max(0, frame.maxY - topGap - newFrame.origin.y)
+        } else {
+            newFrame.size.height -= (topGap + Defaults.screenEdgeGapBottom.cgFloat)
         }
         
         return newFrame
@@ -201,4 +209,3 @@ extension NSScreen {
         NSScreen.screens.contains(where: {!$0.frame.isLandscape})
     }
 }
-

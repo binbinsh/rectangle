@@ -2887,6 +2887,64 @@
                                                     <real value="3.4028234663852886e+38"/>
                                                 </customSpacing>
                                             </stackView>
+                                            <stackView distribution="fill" orientation="horizontal" alignment="centerY" spacing="10" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" translatesAutoresizingMaskIntoConstraints="NO" id="TOP-MR-ROW">
+                                                <rect key="frame" x="0.0" y="308" width="500" height="24"/>
+                                                <subviews>
+                                                    <textField focusRingType="none" horizontalHuggingPriority="751" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="TOP-MR-LBL">
+                                                        <rect key="frame" x="-2" y="4" width="103" height="16"/>
+                                                        <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Top edge margin" id="TOP-MR-TXT">
+                                                            <font key="font" metaFont="system"/>
+                                                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                        </textFieldCell>
+                                                    </textField>
+                                                    <textField focusRingType="none" horizontalHuggingPriority="200" verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="TOP-MR-FLD" customClass="AutoSaveFloatField" customModule="Rectangle" customModuleProvider="target">
+                                                        <rect key="frame" x="107" y="0.0" width="87" height="24"/>
+                                                        <constraints>
+                                                            <constraint firstAttribute="width" constant="87" id="TOP-MR-WID"/>
+                                                        </constraints>
+                                                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="right" title="0" drawsBackground="YES" id="TOP-MR-CELL">
+                                                            <numberFormatter key="formatter" formatterBehavior="default10_4" numberStyle="decimal" formatWidth="-1" minimumIntegerDigits="1" maximumIntegerDigits="2000000000" maximumFractionDigits="3" id="TOP-MR-FMT"/>
+                                                            <font key="font" metaFont="system"/>
+                                                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                        </textFieldCell>
+                                                    </textField>
+                                                    <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="751" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="TOP-MR-UNIT">
+                                                        <rect key="frame" x="202" y="4" width="20" height="16"/>
+                                                        <textFieldCell key="cell" lineBreakMode="clipping" title="px" id="TOP-MR-UNTC">
+                                                            <font key="font" metaFont="system"/>
+                                                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                        </textFieldCell>
+                                                    </textField>
+                                                    <customView horizontalHuggingPriority="249" verticalHuggingPriority="249" translatesAutoresizingMaskIntoConstraints="NO" id="TOP-MR-SPC">
+                                                        <rect key="frame" x="228" y="0.0" width="272" height="24"/>
+                                                    </customView>
+                                                </subviews>
+                                                <visibilityPriorities>
+                                                    <integer value="1000"/>
+                                                    <integer value="1000"/>
+                                                    <integer value="1000"/>
+                                                    <integer value="1000"/>
+                                                </visibilityPriorities>
+                                                <customSpacing>
+                                                    <real value="3.4028234663852886e+38"/>
+                                                    <real value="3.4028234663852886e+38"/>
+                                                    <real value="3.4028234663852886e+38"/>
+                                                    <real value="3.4028234663852886e+38"/>
+                                                </customSpacing>
+                                            </stackView>
+                                            <button verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="TOP-MR-ABS">
+                                                <rect key="frame" x="0.0" y="308" width="500" height="16"/>
+                                                <buttonCell key="cell" type="check" title="Use absolute top edge margin (ignore display inset)" bezelStyle="regularSquare" imagePosition="left" inset="2" id="TOP-MR-CEL">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="toggleScreenEdgeGapTopUsesFullFrame:" target="yhc-gS-h02" id="TOP-MR-ACT"/>
+                                                </connections>
+                                            </button>
                                             <button verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="UY7-Nt-G3K">
                                                 <rect key="frame" x="0.0" y="308" width="500" height="16"/>
                                                 <buttonCell key="cell" type="check" title="Remove keyboard shortcut restrictions" bezelStyle="regularSquare" imagePosition="left" inset="2" id="n4U-FC-L9s">
@@ -3417,6 +3475,8 @@
                         <outlet property="gapSlider" destination="O9H-ZD-bqL" id="H7T-4Y-g8e"/>
                         <outlet property="hideMenuBarIconCheckbox" destination="wBT-R4-q9s" id="bkO-zn-yAZ"/>
                         <outlet property="launchOnLoginCheckbox" destination="eQJ-O3-a8H" id="iF3-bq-l1j"/>
+                        <outlet property="screenEdgeGapTopField" destination="TOP-MR-FLD" id="TOP-MR-FLD-OUT"/>
+                        <outlet property="screenEdgeGapTopUsesFullFrameCheckbox" destination="TOP-MR-ABS" id="TOP-MR-OUT"/>
                         <outlet property="reflowTodoShortcutView" destination="QTZ-pv-mwo" id="VYl-Tv-gFy"/>
                         <outlet property="stageLabel" destination="eJ0-SU-XN3" id="NbI-hl-Tg2"/>
                         <outlet property="stageSlider" destination="JTT-40-Rtw" id="9UK-b3-ph7"/>

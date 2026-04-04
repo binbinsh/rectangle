@@ -395,6 +395,14 @@ You can also separately specify the gap for a screen with a notch. Useful for mu
 defaults write com.knollsoft.Rectangle screenEdgeGapTopNotch -int 5
 ```
 
+By default, top gaps are applied on top of the screen's visible frame, so macOS menu bar or safe-area insets are still respected first.
+If you want `screenEdgeGapTop` and `screenEdgeGapTopNotch` to behave as absolute margins from the physical top edge of the display instead, enable the hidden setting below.
+This is useful for menubar replacements where every display should end up with the same final top margin.
+
+```bash
+defaults write com.knollsoft.Rectangle screenEdgeGapTopUsesFullFrame -bool true
+```
+
 If you want these gaps to be applied on your main screen only you can set screenEdgeGapsOnMainScreenOnly. Useful for multi display setups where only one screen has some dock replacement.
 
 ```bash
