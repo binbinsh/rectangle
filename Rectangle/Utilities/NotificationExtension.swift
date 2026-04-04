@@ -20,6 +20,7 @@ extension Notification.Name {
     static let missionControlDragging = Notification.Name("missionControlDragging")
     static let menuBarIconHidden = Notification.Name("menuBarIconHidden")
     static let windowTitleBar = Notification.Name("windowTitleBar")
+    static let greenButtonZoom = Notification.Name("greenButtonZoom")
     static let defaultSnapAreas = Notification.Name("defaultSnapAreas")
     static let updateAvailability = Notification.Name("updateAvailability")
     static let showAdditionalSizesInMenuChanged = Notification.Name("showAdditionalSizesInMenuChanged")
@@ -48,4 +49,3 @@ extension Notification.Name {
     }
 
 }
-

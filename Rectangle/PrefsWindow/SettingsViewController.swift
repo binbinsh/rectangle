@@ -27,6 +27,7 @@ class SettingsViewController: NSViewController {
     @IBOutlet weak var cursorAcrossCheckbox: NSButton!
     @IBOutlet weak var useCursorScreenDetectionCheckbox: NSButton!
     @IBOutlet weak var doubleClickTitleBarCheckbox: NSButton!
+    @IBOutlet weak var greenButtonMaximizeCheckbox: NSButton!
     @IBOutlet weak var todoCheckbox: NSButton!
     @IBOutlet weak var todoView: NSStackView!
     @IBOutlet weak var todoAppWidthField: AutoSaveFloatField!
@@ -149,6 +150,11 @@ class SettingsViewController: NSViewController {
         }
         Defaults.doubleClickTitleBar.value = (newSetting ? WindowAction.maximize.rawValue : -1) + 1
         Notification.Name.windowTitleBar.post()
+    }
+
+    @IBAction func toggleGreenButtonMaximize(_ sender: NSButton) {
+        Defaults.greenButtonMaximize.enabled = sender.state == .on
+        Notification.Name.greenButtonZoom.post()
     }
     
     @IBAction func toggleTodoMode(_ sender: NSButton) {
@@ -1021,6 +1027,7 @@ class SettingsViewController: NSViewController {
         useCursorScreenDetectionCheckbox.state = Defaults.useCursorScreenDetection.enabled ? .on : .off
 
         doubleClickTitleBarCheckbox.state = WindowAction(rawValue: Defaults.doubleClickTitleBar.value - 1) != nil ? .on : .off
+        greenButtonMaximizeCheckbox.state = Defaults.greenButtonMaximize.enabled ? .on : .off
 
         if StageUtil.stageCapable {
             stageSlider.intValue = Int32(Defaults.stageSize.value)

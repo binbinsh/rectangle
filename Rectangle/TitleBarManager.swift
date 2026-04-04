@@ -8,33 +8,104 @@
 import Foundation
 
 class TitleBarManager {
-    private var eventMonitor: EventMonitor!
-    private var lastEventNumber: Int?
+    private var titleBarMonitor: EventMonitor!
+    private var greenButtonMonitor: EventMonitor!
+    private var lastTitleBarEventNumber: Int?
+    private var pendingGreenButtonClick: PendingGreenButtonClick?
 
     init() {
-        eventMonitor = PassiveEventMonitor(mask: .leftMouseUp, handler: handle)
-        toggleListening()
+        titleBarMonitor = PassiveEventMonitor(mask: .leftMouseUp, handler: handleTitleBar)
+        greenButtonMonitor = ActiveEventMonitor(mask: [.leftMouseDown, .leftMouseUp], filterer: filterGreenButton, handler: {_ in })
+        toggleTitleBarListening()
+        toggleGreenButtonListening()
         Notification.Name.windowTitleBar.onPost { notification in
-            self.toggleListening()
+            self.toggleTitleBarListening()
+        }
+        Notification.Name.greenButtonZoom.onPost { notification in
+            self.toggleGreenButtonListening()
         }
         Notification.Name.configImported.onPost { notification in
-            self.toggleListening()
+            self.toggleTitleBarListening()
+            self.toggleGreenButtonListening()
         }
     }
     
-    private func toggleListening() {
-        if WindowAction(rawValue: Defaults.doubleClickTitleBar.value - 1) != nil {
-            eventMonitor.start()
-        } else {
-            eventMonitor.stop()
+    private func toggleTitleBarListening() {
+        let shouldListen = WindowAction(rawValue: Defaults.doubleClickTitleBar.value - 1) != nil
+        if shouldListen {
+            if !titleBarMonitor.running {
+                titleBarMonitor.start()
+            }
+        } else if titleBarMonitor.running {
+            titleBarMonitor.stop()
         }
     }
+
+    private func toggleGreenButtonListening() {
+        pendingGreenButtonClick = nil
+        if Defaults.greenButtonMaximize.enabled {
+            if !greenButtonMonitor.running {
+                greenButtonMonitor.start()
+            }
+        } else if greenButtonMonitor.running {
+            greenButtonMonitor.stop()
+        }
+    }
+
+    private func eventLocation(_ event: NSEvent) -> CGPoint? {
+        event.cgEvent?.location.screenFlipped ?? NSEvent.mouseLocation.screenFlipped
+    }
+
+    private func plainLeftClick(_ event: NSEvent) -> Bool {
+        event.modifierFlags.intersection(.deviceIndependentFlagsMask).isEmpty && event.clickCount == 1
+    }
+
+    private func greenButtonTarget(at location: CGPoint) -> PendingGreenButtonClick? {
+        guard
+            let element = AccessibilityElement(location)?.getSelfOrChildElementRecursively(location),
+            let windowElement = element.windowElement,
+            let buttonFrame = windowElement.fullScreenButtonFrame,
+            buttonFrame.contains(location)
+        else {
+            return nil
+        }
+        return PendingGreenButtonClick(windowElement: windowElement, buttonFrame: buttonFrame)
+    }
     
-    private func handle(_ event: NSEvent) {
+    private func filterGreenButton(_ event: NSEvent) -> Bool {
+        guard Defaults.greenButtonMaximize.enabled, let location = eventLocation(event) else {
+            pendingGreenButtonClick = nil
+            return false
+        }
+
+        switch event.type {
+        case .leftMouseDown:
+            guard plainLeftClick(event), let target = greenButtonTarget(at: location) else {
+                pendingGreenButtonClick = nil
+                return false
+            }
+            pendingGreenButtonClick = target
+            return true
+        case .leftMouseUp:
+            guard let pending = pendingGreenButtonClick else { return false }
+            pendingGreenButtonClick = nil
+            if pending.buttonFrame.contains(location) {
+                DispatchQueue.main.async {
+                    WindowAction.maximize.postTitleBar(windowElement: pending.windowElement)
+                }
+            }
+            return true
+        default:
+            pendingGreenButtonClick = nil
+            return false
+        }
+    }
+
+    private func handleTitleBar(_ event: NSEvent) {
         guard
             event.type == .leftMouseUp,
             event.clickCount == 2,
-            event.eventNumber != lastEventNumber,
+            event.eventNumber != lastTitleBarEventNumber,
             TitleBarManager.systemSettingDisabled,
             let action = WindowAction(rawValue: Defaults.doubleClickTitleBar.value - 1),
             case let location = NSEvent.mouseLocation.screenFlipped,
@@ -44,7 +115,7 @@ class TitleBarManager {
         else {
             return
         }
-        lastEventNumber = event.eventNumber
+        lastTitleBarEventNumber = event.eventNumber
         
         var bundleIdentifier: String?
         if let pid = element.pid {
@@ -83,6 +154,11 @@ class TitleBarManager {
         }
         action.postTitleBar(windowElement: windowElement)
     }
+}
+
+private struct PendingGreenButtonClick {
+    let windowElement: AccessibilityElement
+    let buttonFrame: CGRect
 }
 
 extension TitleBarManager {

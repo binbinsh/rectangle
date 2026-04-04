@@ -2985,6 +2985,16 @@
                                                     <action selector="toggleDoubleClickTitleBar:" target="yhc-gS-h02" id="q5b-BO-7n2"/>
                                                 </connections>
                                             </button>
+                                            <button verticalHuggingPriority="750" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="GRN-BTN-MAX">
+                                                <rect key="frame" x="0.0" y="204" width="500" height="16"/>
+                                                <buttonCell key="cell" type="check" title="Green zoom button uses Rectangle maximize" bezelStyle="regularSquare" imagePosition="left" inset="2" id="GRN-BTN-CELL">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="toggleGreenButtonMaximize:" target="yhc-gS-h02" id="GRN-BTN-ACT"/>
+                                                </connections>
+                                            </button>
                                             <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="evn-f6-2bW">
                                                 <rect key="frame" x="0.0" y="198" width="500" height="24"/>
                                                 <constraints>
@@ -3473,6 +3483,7 @@
                         <outlet property="extraSettingsButton" destination="Ext-Set-Btn" id="Ext-Set-Out"/>
                         <outlet property="gapLabel" destination="jd8-SJ-lza" id="pqG-fr-nwW"/>
                         <outlet property="gapSlider" destination="O9H-ZD-bqL" id="H7T-4Y-g8e"/>
+                        <outlet property="greenButtonMaximizeCheckbox" destination="GRN-BTN-MAX" id="GRN-BTN-OUT"/>
                         <outlet property="hideMenuBarIconCheckbox" destination="wBT-R4-q9s" id="bkO-zn-yAZ"/>
                         <outlet property="launchOnLoginCheckbox" destination="eQJ-O3-a8H" id="iF3-bq-l1j"/>
                         <outlet property="screenEdgeGapTopField" destination="TOP-MR-FLD" id="TOP-MR-FLD-OUT"/>

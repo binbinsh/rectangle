@@ -232,9 +232,18 @@ class AccessibilityElement {
     var isMinimized: Bool? {
         windowElement?.wrappedElement.getValue(.minimized) as? Bool
     }
+
+    var fullScreenButtonElement: AccessibilityElement? {
+        windowElement?.getElementValue(.fullScreenButton)
+    }
+
+    var fullScreenButtonFrame: CGRect? {
+        guard let buttonFrame = fullScreenButtonElement?.frame, buttonFrame != .null else { return nil }
+        return buttonFrame
+    }
     
     var isFullScreen: Bool? {
-        guard let subrole = windowElement?.getElementValue(.fullScreenButton)?.subrole else { return nil }
+        guard let subrole = fullScreenButtonElement?.subrole else { return nil }
         return subrole == .zoomButton
     }
     
