@@ -16,7 +16,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             terminate()
             return
         }
-        let mainAppIdentifier = "com.knollsoft.Rectangle"
+        let mainAppIdentifier = "app.cmdspace.rectangle"
         let running = NSWorkspace.shared.runningApplications
         let isRunning = !running.filter({$0.bundleIdentifier == mainAppIdentifier}).isEmpty
         
@@ -45,4 +45,3 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
 }
-

@@ -52,6 +52,8 @@ class Defaults {
     static let iCloudSync = BoolDefault(key: "iCloudSync")
     static let iCloudSyncStartupMode = IntEnumDefault<ICloudSyncStartupMode>(key: "iCloudSyncStartupMode", defaultValue: .automatic)
     static let iCloudConfigTimestamp = IntDefault(key: "iCloudConfigTimestamp")
+    static let iCloudLastSyncTimestamp = IntDefault(key: "iCloudLastSyncTimestamp")
+    static let iCloudLastSyncResult = StringDefault(key: "iCloudLastSyncResult")
     static var SUHasLaunchedBefore: Bool { UserDefaults.standard.bool(forKey: "SUHasLaunchedBefore") }
     static let footprintAlpha = FloatDefault(key: "footprintAlpha", defaultValue: 0.3)
     static let footprintBorderWidth = FloatDefault(key: "footprintBorderWidth", defaultValue: 2)

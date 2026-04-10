@@ -31,7 +31,7 @@ extension Defaults {
             codableDefaults[exportableDefault.key] = exportableDefault.toCodable()
         }
                 
-        let config = Config(bundleId: "com.knollsoft.Rectangle",
+        let config = Config(bundleId: Bundle.main.bundleIdentifier ?? "app.cmdspace.rectangle",
                             version: version,
                             shortcuts: shortcuts,
                             defaults: codableDefaults)
@@ -173,6 +173,8 @@ struct ICloudSyncSnapshot {
     let hasPendingUpload: Bool
     let localUpdatedAt: Int
     let remoteUpdatedAt: Int
+    let lastSyncedAt: Int
+    let lastSyncResult: String?
 }
 
 class ICloudConfigSyncManager {
@@ -183,6 +185,26 @@ class ICloudConfigSyncManager {
     
     private static let configKey = "rectangleICloudConfig"
     private static let timestampKey = "rectangleICloudConfigTimestamp"
+    
+    private enum SyncOutcome {
+        case uploaded
+        case downloaded
+        case noChanges
+        case unavailable
+        
+        var description: String {
+            switch self {
+            case .uploaded:
+                return "Uploaded this Mac's configuration to iCloud."
+            case .downloaded:
+                return "Downloaded the newer iCloud configuration."
+            case .noChanges:
+                return "Checked iCloud. No configuration changes were needed."
+            case .unavailable:
+                return "iCloud is unavailable on this Mac."
+            }
+        }
+    }
     
     static let shared = ICloudConfigSyncManager()
     
@@ -241,27 +263,32 @@ class ICloudConfigSyncManager {
                                   hasRemoteConfig: remote.payload?.isEmpty == false && remote.updatedAt > 0,
                                   hasPendingUpload: pendingUpload != nil,
                                   localUpdatedAt: Defaults.iCloudConfigTimestamp.value,
-                                  remoteUpdatedAt: remote.updatedAt)
+                                  remoteUpdatedAt: remote.updatedAt,
+                                  lastSyncedAt: Defaults.iCloudLastSyncTimestamp.value,
+                                  lastSyncResult: Defaults.iCloudLastSyncResult.value)
     }
     
     @discardableResult
     func syncNow() -> Bool {
         guard isICloudAvailable else {
+            recordSyncOutcome(.unavailable)
             postStateChanged()
             return false
         }
-        reconcileWithICloud(syncReason: .manual)
+        _ = reconcileWithICloud(syncReason: .manual)
         return true
     }
     
     @discardableResult
     func uploadCurrentConfig() -> Bool {
         guard isICloudAvailable, let payload = Defaults.encoded(), !payload.isEmpty else {
+            recordSyncOutcome(.unavailable)
             postStateChanged()
             return false
         }
         
         upload(payload: payload, updatedAt: Self.currentTimestamp(), requireEnabled: false)
+        recordSyncOutcome(.uploaded)
         return true
     }
     
@@ -269,11 +296,13 @@ class ICloudConfigSyncManager {
     func downloadFromICloud() -> Bool {
         let remote = remoteState()
         guard isICloudAvailable, let payload = remote.payload, !payload.isEmpty, remote.updatedAt > 0 else {
+            recordSyncOutcome(.unavailable)
             postStateChanged()
             return false
         }
         
         applyRemote(payload: payload, updatedAt: remote.updatedAt)
+        recordSyncOutcome(.downloaded)
         return true
     }
     
@@ -311,8 +340,9 @@ class ICloudConfigSyncManager {
         case manual
     }
     
-    private func reconcileWithICloud(syncReason: SyncReason) {
-        guard Defaults.iCloudSync.enabled, isICloudAvailable else { return }
+    @discardableResult
+    private func reconcileWithICloud(syncReason: SyncReason) -> SyncOutcome? {
+        guard Defaults.iCloudSync.enabled, isICloudAvailable else { return nil }
         
         let remote = remoteState()
         let remotePayload = remote.payload
@@ -326,38 +356,76 @@ class ICloudConfigSyncManager {
                 case .local:
                     if let localPayload, !localPayload.isEmpty {
                         upload(payload: localPayload, updatedAt: Self.currentTimestamp(), requireEnabled: true)
+                        if syncReason == .manual {
+                            recordSyncOutcome(.uploaded)
+                        }
+                        return .uploaded
                     }
                 case .remote:
                     applyRemote(payload: remotePayload, updatedAt: remoteUpdatedAt)
+                    if syncReason == .manual {
+                        recordSyncOutcome(.downloaded)
+                    }
+                    return .downloaded
                 case .automatic:
                     if remotePayload == localPayload {
                         Defaults.iCloudConfigTimestamp.value = remoteUpdatedAt
                         postStateChanged()
+                        if syncReason == .manual {
+                            recordSyncOutcome(.noChanges)
+                        }
+                        return .noChanges
                     } else if syncReason == .startup {
                         applyRemote(payload: remotePayload, updatedAt: remoteUpdatedAt)
+                        return .downloaded
                     } else if let localPayload, !localPayload.isEmpty {
                         upload(payload: localPayload, updatedAt: Self.currentTimestamp(), requireEnabled: true)
+                        recordSyncOutcome(.uploaded)
+                        return .uploaded
                     } else {
                         applyRemote(payload: remotePayload, updatedAt: remoteUpdatedAt)
+                        if syncReason == .manual {
+                            recordSyncOutcome(.downloaded)
+                        }
+                        return .downloaded
                     }
                 }
-                return
+                return nil
             }
             
             if remoteUpdatedAt > localUpdatedAt {
                 if remotePayload == localPayload {
                     Defaults.iCloudConfigTimestamp.value = remoteUpdatedAt
                     postStateChanged()
+                    if syncReason == .manual {
+                        recordSyncOutcome(.noChanges)
+                    }
+                    return .noChanges
                 } else {
                     applyRemote(payload: remotePayload, updatedAt: remoteUpdatedAt)
+                    if syncReason == .manual {
+                        recordSyncOutcome(.downloaded)
+                    }
+                    return .downloaded
                 }
-                return
             }
         }
         
-        guard let localPayload, !localPayload.isEmpty else { return }
+        guard let localPayload, !localPayload.isEmpty else {
+            if syncReason == .manual {
+                recordSyncOutcome(.noChanges)
+            }
+            return .noChanges
+        }
         let updatedAt = localUpdatedAt == 0 ? Self.currentTimestamp() : localUpdatedAt
+        let previousRemotePayload = remotePayload
+        let previousRemoteUpdatedAt = remoteUpdatedAt
         upload(payload: localPayload, updatedAt: updatedAt, requireEnabled: true)
+        let uploaded = previousRemotePayload != localPayload || previousRemoteUpdatedAt != updatedAt
+        if syncReason == .manual {
+            recordSyncOutcome(uploaded ? .uploaded : .noChanges)
+        }
+        return uploaded ? .uploaded : .noChanges
     }
     
     private func upload(payload: String, updatedAt: Int, requireEnabled: Bool) {
@@ -417,5 +485,11 @@ class ICloudConfigSyncManager {
     private func postStateChanged() {
         Notification.Name.iCloudSyncAvailabilityChanged.post()
         Notification.Name.iCloudSyncStateChanged.post()
+    }
+    
+    private func recordSyncOutcome(_ outcome: SyncOutcome) {
+        Defaults.iCloudLastSyncTimestamp.value = Self.currentTimestamp()
+        Defaults.iCloudLastSyncResult.value = outcome.description
+        postStateChanged()
     }
 }

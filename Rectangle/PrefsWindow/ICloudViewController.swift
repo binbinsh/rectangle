@@ -8,10 +8,14 @@
 import Cocoa
 
 class ICloudViewController: NSViewController {
+    private static let preferredWindowSize = NSSize(width: 850, height: 520)
+    
     private let automaticSyncCheckbox = NSButton(checkboxWithTitle: "Automatically sync Rectangle settings with iCloud", target: nil, action: nil)
     private let statusValueLabel = ICloudViewController.makeValueLabel()
     private let localUpdatedValueLabel = ICloudViewController.makeValueLabel()
     private let remoteUpdatedValueLabel = ICloudViewController.makeValueLabel()
+    private let lastSyncValueLabel = ICloudViewController.makeValueLabel()
+    private let lastResultValueLabel = ICloudViewController.makeValueLabel()
     private let startupModePopUpButton = NSPopUpButton(frame: .zero, pullsDown: false)
     private let syncNowButton = NSButton(title: "Sync Now", target: nil, action: nil)
     private let uploadButton = NSButton(title: "Upload This Mac", target: nil, action: nil)
@@ -22,6 +26,7 @@ class ICloudViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         buildInterface()
+        preferredContentSize = Self.preferredWindowSize
         
         if let tabViewController = parent as? NSTabViewController,
            let item = tabViewController.tabViewItems.first(where: { $0.viewController === self }) {
@@ -71,12 +76,15 @@ class ICloudViewController: NSViewController {
         let descriptionLabel = ICloudViewController.makeWrappingLabel("Sync shortcuts, snap areas, window behavior, and other Rectangle preferences through iCloud. Import and export JSON backups remain available in General.")
         let syncHeading = ICloudViewController.makeSectionLabel("Automatic Sync")
         let startupHeading = ICloudViewController.makeSectionLabel("When Turning Sync On For This Mac")
-        let copiesHeading = ICloudViewController.makeSectionLabel("Current Copies")
+        let copiesHeading = ICloudViewController.makeSectionLabel("Current Config Versions")
+        let historyHeading = ICloudViewController.makeSectionLabel("Last Sync")
         let actionsHeading = ICloudViewController.makeSectionLabel("Manual Actions")
         
         let statusRow = makeInfoRow(label: "Status", value: statusValueLabel)
         let localRow = makeInfoRow(label: "This Mac", value: localUpdatedValueLabel)
         let remoteRow = makeInfoRow(label: "iCloud", value: remoteUpdatedValueLabel)
+        let lastSyncRow = makeInfoRow(label: "Checked", value: lastSyncValueLabel)
+        let lastResultRow = makeInfoRow(label: "Result", value: lastResultValueLabel)
         
         let startupRow = NSStackView()
         startupRow.orientation = .horizontal
@@ -102,6 +110,9 @@ class ICloudViewController: NSViewController {
             copiesHeading,
             localRow,
             remoteRow,
+            historyHeading,
+            lastSyncRow,
+            lastResultRow,
             actionsHeading,
             actionsRow
         ])
@@ -174,10 +185,16 @@ class ICloudViewController: NSViewController {
         startupModePopUpButton.selectItem(withTag: Defaults.iCloudSyncStartupMode.value.rawValue)
         
         statusValueLabel.stringValue = statusText(snapshot: snapshot)
-        localUpdatedValueLabel.stringValue = formattedTimestamp(snapshot.localUpdatedAt, emptyText: "No tracked local sync timestamp yet")
-        remoteUpdatedValueLabel.stringValue = snapshot.hasRemoteConfig
-            ? formattedTimestamp(snapshot.remoteUpdatedAt, emptyText: "No iCloud copy")
-            : "No iCloud copy stored yet"
+        applyTimestamp(snapshot.localUpdatedAt, to: localUpdatedValueLabel, emptyText: "Never")
+        if snapshot.hasRemoteConfig {
+            applyTimestamp(snapshot.remoteUpdatedAt, to: remoteUpdatedValueLabel, emptyText: "Never")
+        } else {
+            remoteUpdatedValueLabel.stringValue = "None"
+            remoteUpdatedValueLabel.toolTip = nil
+        }
+        applyTimestamp(snapshot.lastSyncedAt, to: lastSyncValueLabel, emptyText: "Never")
+        lastResultValueLabel.stringValue = snapshot.lastSyncResult ?? "No sync result yet"
+        lastResultValueLabel.toolTip = lastResultValueLabel.stringValue
         
         availabilityHintLabel.isHidden = snapshot.isICloudAvailable
         
@@ -211,7 +228,7 @@ class ICloudViewController: NSViewController {
         }
         
         if snapshot.remoteUpdatedAt == snapshot.localUpdatedAt && snapshot.localUpdatedAt > 0 {
-            return "This Mac and iCloud are in sync."
+            return "This Mac and iCloud already have the same configuration."
         }
         
         if snapshot.remoteUpdatedAt > snapshot.localUpdatedAt {
@@ -221,10 +238,31 @@ class ICloudViewController: NSViewController {
         return "This Mac has newer changes than the iCloud copy."
     }
     
-    private func formattedTimestamp(_ timestamp: Int, emptyText: String) -> String {
-        guard timestamp > 0 else { return emptyText }
+    private func applyTimestamp(_ timestamp: Int, to label: NSTextField, emptyText: String) {
+        guard timestamp > 0 else {
+            label.stringValue = emptyText
+            label.toolTip = nil
+            return
+        }
+        
         let date = Date(timeIntervalSince1970: TimeInterval(timestamp) / 1000)
-        return DateFormatter.localizedString(from: date, dateStyle: .medium, timeStyle: .short)
+        label.stringValue = relativeTimestampString(for: date)
+        label.toolTip = absoluteTimestampString(for: date)
+    }
+    
+    private func relativeTimestampString(for date: Date) -> String {
+        let seconds = Date().timeIntervalSince(date)
+        if seconds < 10 {
+            return "Just now"
+        }
+        
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .short
+        return formatter.localizedString(for: date, relativeTo: Date())
+    }
+    
+    private func absoluteTimestampString(for date: Date) -> String {
+        DateFormatter.localizedString(from: date, dateStyle: .medium, timeStyle: .short)
     }
     
     private func makeInfoRow(label: String, value: NSTextField) -> NSStackView {
