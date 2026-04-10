@@ -49,6 +49,9 @@ class Defaults {
     static let installVersion = StringDefault(key: "installVersion")
     static let showAllActionsInMenu = OptionalBoolDefault(key: "showAllActionsInMenu")
     static let showAdditionalSizesInMenu = OptionalBoolDefault(key: "showAdditionalSizesInMenu")
+    static let iCloudSync = BoolDefault(key: "iCloudSync")
+    static let iCloudSyncStartupMode = IntEnumDefault<ICloudSyncStartupMode>(key: "iCloudSyncStartupMode", defaultValue: .automatic)
+    static let iCloudConfigTimestamp = IntDefault(key: "iCloudConfigTimestamp")
     static var SUHasLaunchedBefore: Bool { UserDefaults.standard.bool(forKey: "SUHasLaunchedBefore") }
     static let footprintAlpha = FloatDefault(key: "footprintAlpha", defaultValue: 0.3)
     static let footprintBorderWidth = FloatDefault(key: "footprintBorderWidth", defaultValue: 2)

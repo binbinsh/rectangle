@@ -24,6 +24,8 @@ extension Notification.Name {
     static let defaultSnapAreas = Notification.Name("defaultSnapAreas")
     static let updateAvailability = Notification.Name("updateAvailability")
     static let showAdditionalSizesInMenuChanged = Notification.Name("showAdditionalSizesInMenuChanged")
+    static let iCloudSyncAvailabilityChanged = Notification.Name("iCloudSyncAvailabilityChanged")
+    static let iCloudSyncStateChanged = Notification.Name("iCloudSyncStateChanged")
 
     func post(
         center: NotificationCenter = NotificationCenter.default,

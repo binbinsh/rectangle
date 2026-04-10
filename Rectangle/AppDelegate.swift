@@ -86,13 +86,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         checkAutoCheckForUpdates()
         
         Notification.Name.configImported.onPost(using: { _ in
+            self.checkLaunchOnLogin()
             self.checkAutoCheckForUpdates()
             self.statusItem.refreshVisibility()
-            self.applicationToggle.reloadFromDefaults()
-            self.shortcutManager.reloadFromDefaults()
-            self.snappingManager.reloadFromDefaults()
+            self.applicationToggle?.reloadFromDefaults()
+            self.shortcutManager?.reloadFromDefaults()
+            self.snappingManager?.reloadFromDefaults()
             self.initializeTodo(false)
         })
+        
+        ICloudConfigSyncManager.shared.start()
         
         Notification.Name.todoMenuToggled.onPost(using: { _ in
             self.initializeTodo(false)
